@@ -1,0 +1,23 @@
+{
+  "name": "route-project-backend",
+  "version": "1.0.0",
+  "main": "api/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "vercel dev"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "description": "",
+  "devDependencies": {
+    "@types/node": "^24.2.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.2",
+    "vercel": "^44.7.3"
+  },
+  "dependencies": {
+    "@vercel/node": "^5.3.11"
+  }
+}

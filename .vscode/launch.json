@@ -1,0 +1,16 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug Vercel Dev",
+      "runtimeExecutable": "powershell",
+      "runtimeArgs": ["-Command", "$env:NODE_OPTIONS='--inspect=9229'; npx vercel dev"],
+      "console": "integratedTerminal",
+      "envFile": "${workspaceFolder}/.env",
+      "skipFiles": ["<node_internals>/**"],
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}

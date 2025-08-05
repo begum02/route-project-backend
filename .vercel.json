@@ -4,17 +4,5 @@
     "api/*.ts": {
       "runtime": "@vercel/node"
     }
-  },
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/$1"
-    }
-  ],
-  "env": {
-    "ORS_API_KEY": "@ors_api_key"
-  },
-  "buildCommand": "",
-  "devCommand": "",
-  "installCommand": "npm install"
+  }
 }

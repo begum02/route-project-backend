@@ -34,7 +34,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         const params= new URLSearchParams({
             text:text.trim(),
-            api_key: orsKey || ''
+            api_key: orsKey,
+            size:'10'
         });
 
         const url=`https://api.openrouteservice.org/geocode/autocomplete?${params.toString()}`;

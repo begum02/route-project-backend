@@ -45,8 +45,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(500).json({error:'ORS API isteği başarısız oldu.'});
         }
         const json=await response.json();
+        console.log('features count:',json.features?.length|| 0)
         
-      return res.status(200).json(json);
+      return res.status(200).json(json.features||[]);
     }
         
     catch(error){

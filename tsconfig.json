@@ -4,6 +4,7 @@
     "module": "commonjs",
     "esModuleInterop": true,
     "sourceMap": true,
+    "inlineSources": false,
     "strict": true,
     "outDir": "./dist",
     "moduleResolution": "node",

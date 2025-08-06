@@ -1,10 +1,11 @@
 {
   "name": "route-project-backend",
   "version": "1.0.0",
+  "engines": {
+    "node": "20.x"
+  },
   "scripts": {
-  
     "start": "vercel dev"
-   
   },
   "devDependencies": {
     "@types/node": "^24.2.0",

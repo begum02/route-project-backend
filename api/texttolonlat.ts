@@ -2,7 +2,7 @@ import { VercelRequest, VercelResponse } from "@vercel/node";
 
 export default async function handler(req:VercelRequest,res:VercelResponse) {
     console.log('Text to LonLat API çağrıldı');
-    res.setHeader('Access-Control-Allow-Origin', 'https://route-project-backend-jfiml74lr-begum02s-projects.vercel.app/api/texttolonlat');
+    res.setHeader('Access-Control-Allow-Origin', 'http://127.0.0.1:5173/');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS, POST');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     res.setHeader('Set-Cookie', 'clear=; Max-Age=0');

@@ -88,7 +88,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const start = req.query.start ? JSON.parse(req.query.start as string) : undefined;
       const end = req.query.end ? JSON.parse(req.query.end as string) : undefined;
       const waypoints = req.query.waypoints ? JSON.parse(req.query.waypoints as string) : [];
-      const profile = req.query.profile?JSON.parse(req.query.profile as string):[];
+      const profile = req.query.profile as string;
 
       if (!start || !end || !profile) {
         return res.status(400).json({ error: 'Missing required parameters: start, end, or profile' });

@@ -1,4 +1,15 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
+
+interface Step{
+  instruction: string;
+  type: number;
+  distance: number;
+  duration: number;
+}
+interface Coordinate{
+  lat: number;
+  lng: number;
+}
 export default async function handler(req:VercelRequest,res:VercelResponse){
  
     res.setHeader('Access-Control-Allow-Origin','*');
@@ -37,20 +48,59 @@ export default async function handler(req:VercelRequest,res:VercelResponse){
     )
     if(!apiResponse.ok){
         throw new Error('Route calculation failed');
-    }
-    const data = await apiResponse.json();
-    return res.status(200).json(data);
-    
-    }
-    
+   
 
-  
+ }
+     const data = await apiResponse.json();
+    const route=data.routes[0];
+    if(!route){
+        return res.status(404).json({error:'Route not found'});
+    }
+    const durationHour = Math.floor(route.summary.duration / 3600);
+    const remainingMinute=Math.round((route.summary.duration%3600)/60); // kalan dakika
 
+      
+    let durationText='';
+    if(durationHour>0&&remainingMinute>0){
+        durationText=`${durationHour} saat ${remainingMinute} dakika`;
+
+    }
+
+    else if(durationHour>0){
+        durationText=`${durationHour} saat`;
+    }
+
+    else if(remainingMinute>0){
+        durationText=`${remainingMinute} dakika`;
+    }
+    
+ const distanceKm=(route.summary.distance/1000).toFixed(1); // metre cinsinden mesafe
+const steps = route.segments[0].steps.map((step: Step) => ({
+  instruction: step.instruction,
+  iconType: step.type,
+  distance: step.distance,
+  duration: step.duration,
+}));
+
+ const geometry = route.geometry.coordinates.map((coordinate: [number, number]) => ({
+  lat: coordinate[1],
+  lon: coordinate[0]
+}));
+    return res.status(200).json({
+      duration: durationText,
+      distance: `${distanceKm} km`,
+      steps,
+      geometry
+      }
+    ) }
  catch (error) {
       console.error(error);
       return res.status(500).json({ error: 'An error occurred' });
     }
 
 }
-}
 
+
+
+
+}

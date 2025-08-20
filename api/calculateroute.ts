@@ -52,10 +52,11 @@ async function calculateRoute(start: any, end: any, waypoints: any, profile: str
     duration: step.duration,
   }));
 
-  const geometry = route.geometry.coordinates.map((coordinate: [number, number]) => ({
+  const newLocal = route.geometry.coordinates.map((coordinate: [number, number]) => ({
     lat: coordinate[1],
     lon: coordinate[0]
   }));
+  const geometry = newLocal;
 
   return {
     duration: durationText,

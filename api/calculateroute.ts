@@ -26,8 +26,8 @@ export default async function handler(req:VercelRequest,res:VercelResponse){
               'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-              coordinates: [start, ...waypoints, end],
-              profile: profile,
+              coordinates: [start, ...(waypoints||[]), end]
+
 
             })
               

@@ -1,39 +1,62 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
+import polyline from '@mapbox/polyline';
 
 interface Step {
   instruction: string;
   type: number;
-  distance: number;
+  distance:string;
   duration: number;
-}
-interface Coordinate {
-  lat: number;
-  lng: number;
+  name?: string;
 }
 
-async function calculateRoute(start: any, end: any, waypoints: any, profile: string) {
-  const coordinates = [start, ...(waypoints || []), end];
-  const apiResponse = await fetch(`https://api.openrouteservice.org/v2/directions/${profile}`, {
-    method: 'POST',
-    headers: {
-      'Authorization': process.env.ORS_API_KEY || '',
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ coordinates })
-  });
+type Coordinate = [number, number]; // [longitude, latitude]
 
-  if (!apiResponse.ok) {
-    throw new Error('Route calculation failed');
+
+async function calculateRoute(start: Coordinate, end: Coordinate, waypoints: Coordinate[], profile: string) {
+  const coordinates = [start, ...(waypoints || []),end];
+let data;
+
+  try {
+    const apiResponse = await fetch(
+      `https://api.openrouteservice.org/v2/directions/${profile}?format=json&instructions=true`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': process.env.ORS_API_KEY || '',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ coordinates,language: 'tr' }),
+      }
+    );
+
+  data = await apiResponse.json();
+    console.log('ORS data', data);
+  } catch (err) {
+    return { error: 'ORS yanıtı alınamadı veya parse edilemedi', status: 500 };
   }
 
-  const data = await apiResponse.json();
-  const route = data.routes[0];
-  if (!route) {
-    throw new Error('Route not found');
-  }
+  let steps, geometry, summary;
 
-  const durationHour = Math.floor(route.summary.duration / 3600);
-  const remainingMinute = Math.round((route.summary.duration % 3600) / 60);
+
+   if (data.features && data.features[0]) {
+     const feature = data.features[0];
+     steps = feature.properties.segments[0].steps;
+     geometry = feature.geometry;
+     summary = feature.properties.summary;
+   } else if (data.routes && data.routes[0]) {
+     const route = data.routes[0];
+     steps = route.segments[0].steps;
+     summary = route.summary;
+     geometry = typeof route.geometry === 'string'
+    ? polyline.decode(route.geometry)
+    : route.geometry;
+    console.log('route.geometry', route.geometry);
+   } else {
+     return { error: 'Route or steps not found', status: 404 };
+   }
+
+  const durationHour = Math.floor(summary.duration / 3600);
+  const remainingMinute = Math.round((summary.duration % 3600) / 60);
 
   let durationText = '';
   if (durationHour > 0 && remainingMinute > 0) {
@@ -44,31 +67,51 @@ async function calculateRoute(start: any, end: any, waypoints: any, profile: str
     durationText = `${remainingMinute} dakika`;
   }
 
-  const distanceKm = (route.summary.distance / 1000).toFixed(1);
-  const steps = route.segments[0].steps.map((step: Step) => ({
-    instruction: step.instruction,
-    iconType: step.type,
-    distance: step.distance,
-    duration: step.duration,
-  }));
+  const distanceKm = (summary.distance / 1000).toFixed(1);
 
-  const newLocal = route.geometry.coordinates.map((coordinate: [number, number]) => ({
-    lat: coordinate[1],
-    lon: coordinate[0]
-  }));
-  const geometry = newLocal;
+  const parsedSteps: Step[] = steps.map((step: any) => {
+    const hour = Math.floor(step.duration / 3600);
+    const minute = Math.floor((step.duration % 3600) / 60);
+    const second = Math.round(step.duration % 60);
+   const distance = (step.distance / 1000).toFixed(1);
+    let durationText = '';
+    if (hour > 0 && minute > 0) {
+      durationText = `${hour} saat ${minute} dakika`;
+    } else if (hour > 0) {
+      durationText = `${hour} saat`;
+    } else if (minute > 0) {
+      durationText = `${minute} dakika`;
+    } else {
+      durationText = `${second} saniye`;
+    }
+  
+
+    return {
+      instruction: step.instruction,
+      type: step.type,
+      distance: `${distance} km`,
+      duration:durationText
+     
+    };
+  });
+
+  if (!steps) {
+    return { error: 'Route or steps not found', status: 404 };
+  }
 
   return {
     duration: durationText,
     distance: `${distanceKm} km`,
-    steps,
+    steps: parsedSteps,
     geometry
+
+    
   };
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') {
@@ -77,11 +120,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     if (req.method === 'POST') {
-      const { start, end, waypoints, profile } = req.body;
+      const { start, end, waypoints = [], profile } = req.body;
       if (!start || !end || !profile) {
         return res.status(400).json({ error: 'Missing required parameters: start, end, or profile' });
       }
       const result = await calculateRoute(start, end, waypoints, profile);
+      if (result && (result as any).error) {
+        return res.status((result as any).status || 404).json({ error: (result as any).error });
+      }
+      console.log(result);
       return res.status(200).json(result);
     }
 
@@ -97,10 +144,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const result = await calculateRoute(start, end, waypoints, profile);
       return res.status(200).json(result);
     }
-
-    return res.status(405).json({ error: 'Method not allowed' });
+    return res.status(405).json({ error: 'Method Not Allowed' });
   } catch (error) {
     console.error(error);
-      return res.status(500).json({ error: (error instanceof Error ? error.message : 'An error occurred') });
+    return res.status(500).json({ error: error instanceof Error ? error.message : 'An error occurred' });
   }
 }
+
+// ← Burada dosya bitmeli, fazladan } olmamalı!
+// --- IGNORE ---

@@ -8,12 +8,14 @@
     "start": "vercel dev"
   },
   "devDependencies": {
+    "@types/mapbox__polyline": "^1.0.5",
     "@types/node": "^24.2.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.2",
     "vercel": "^44.7.3"
   },
   "dependencies": {
+    "@mapbox/polyline": "^1.2.1",
     "@vercel/node": "^5.3.11",
     "node-fetch": "^3.3.2"
   }
